@@ -1,0 +1,6 @@
+# Disabling blank issues to ensure all necessary information is provided
+blank_issues_enabled: false
+contact_links:
+  - name: Questions
+    url: https://github.com/dan-s-github/api-electricityinfo-nz/discussions/categories/q-a
+    about: Please ask and answer questions here.

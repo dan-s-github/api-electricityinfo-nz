@@ -7,18 +7,18 @@ Python client library for the WITS Market Prices API (`/api/market-prices/v1`) â
 ## Commands
 
 ```bash
-pip install -e ".[dev]"          # Install with dev dependencies
+uv sync                          # Install all dependencies (creates .venv)
 
-pytest                           # Run all tests
-pytest tests/test_client.py      # Run a single test file
-pytest -k "test_get_prices"      # Run a single test by name
-pytest --cov=src/electricityinfo_nz  # With coverage
+uv run pytest                    # Run all tests
+uv run pytest tests/test_client.py      # Run a single test file
+uv run pytest -k "test_get_prices"      # Run a single test by name
 
-black src/ tests/                # Format code
-flake8 src/ tests/               # Lint
-mypy src/                        # Type-check
+uv run pre-commit run -a         # Run all linters/formatters
+uv run ruff check src/ tests/    # Lint only
+uv run ruff format src/ tests/   # Format only
+uv run mypy src/                 # Type-check
 
-python -m build                  # Build distribution
+uv build                         # Build distribution
 ```
 
 ## Architecture
@@ -44,9 +44,9 @@ src/electricityinfo_nz/
 
 **Models:** Use `@dataclass` throughout. API JSON keys (camelCase) are mapped to snake_case Python fields in `utils.py`.
 
-**Type hints:** All public functions are fully annotated. `mypy` is enforced; keep `ignore_missing_imports = true` for third-party stubs.
+**Type hints:** All public functions are fully annotated. Strict mypy is enforced (`disallow_untyped_defs`, `disallow_any_generics`); tests are exempt.
 
-**Line length:** 100 characters (black + flake8 both configured for this).
+**Line length:** 100 characters (ruff configured for this).
 
 **Error handling:** Raise specific exception subclasses from `exceptions.py`, never raw `requests.HTTPError`. The `_wrap()` pattern in `client.py` is the canonical place for HTTP-to-exception mapping.
 
