@@ -77,21 +77,31 @@ lint.ignore = [
 ]
 lint.per-file-ignores."conftest.py" = [ "D100" ]
 lint.per-file-ignores."docs/conf.py" = [ "D100" ]
-lint.per-file-ignores."tests/**/*" = [ "D100", "D101", "D102", "D103", "D104", "S101" ]
+lint.per-file-ignores."setup.py" = [ "D100" ]
+lint.per-file-ignores."tests/**/*" = [
+  "D100",
+  "D101",
+  "D102",
+  "D103",
+  "D104",
+  "S101",
+]
 lint.isort.known-first-party = [ "electricityinfo_nz", "tests" ]
 
 [tool.pyproject-fmt]
 max_supported_python = "3.14"
 
 [tool.pytest]
-ini_options.addopts = [
+minversion = "9.0"
+addopts = [
   "-v",
   "-Wonce",
+  "-p no:doctest",
   "--cov=electricityinfo_nz",
   "--cov-report=term",
   "--cov-report=xml",
 ]
-ini_options.pythonpath = [ "src" ]
+pythonpath = [ "src" ]
 
 [tool.coverage]
 run.branch = true
@@ -117,14 +127,21 @@ no_implicit_optional = true
 show_error_codes = true
 warn_unreachable = true
 warn_unused_ignores = true
-exclude = [ "setup.py" ]
+exclude = [
+  "docs/.*",
+  "setup.py",
+]
 overrides = [
   { module = "tests.*", allow_untyped_defs = true },
+  { module = "docs.*", ignore_errors = true },
 ]
 
 [tool.semantic_release]
 version_toml = [ "pyproject.toml:project.version" ]
-version_variables = [ "src/electricityinfo_nz/__init__.py:__version__", "docs/conf.py:release" ]
+version_variables = [
+  "src/electricityinfo_nz/__init__.py:__version__",
+  "docs/conf.py:release",
+]
 build_command = """
 pip install uv
 uv lock
