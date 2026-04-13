@@ -1,20 +1,25 @@
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Optional
+
 import requests
 
+from .constants import DEFAULT_TIMEOUT
 from .exceptions import AuthenticationError
 
-
-DEFAULT_TOKEN_PATH = "/login/oauth2/token"
+DEFAULT_TOKEN_PATH = "/login/oauth2/token"  # noqa: S105
 
 
 @dataclass
 class OAuth2ClientCredentials:
+    """Fetch and cache OAuth2 client-credentials access tokens."""
+
     client_id: str
     client_secret: str
     base_url: str
     token_path: str = DEFAULT_TOKEN_PATH
+    session: requests.Session = field(default_factory=requests.Session)
+    timeout: float = DEFAULT_TIMEOUT
 
     _access_token: Optional[str] = None
     _expires_at: float = 0.0
@@ -27,27 +32,44 @@ class OAuth2ClientCredentials:
         return bool(self._access_token) and time.time() < self._expires_at - 30
 
     def get_token(self) -> str:
+        """Return a cached access token or fetch a new one."""
         if self._is_valid():
             return self._access_token or ""
 
-        response = requests.post(
-            self._token_url(),
-            data={"grant_type": "client_credentials"},
-            auth=(self.client_id, self.client_secret),
-        )
+        try:
+            response = self.session.post(
+                self._token_url(),
+                data={"grant_type": "client_credentials"},
+                auth=(self.client_id, self.client_secret),
+                timeout=self.timeout,
+            )
+        except requests.RequestException as exc:
+            raise AuthenticationError(f"Failed to obtain access token: {exc}") from exc
 
         if response.status_code != 200:
             raise AuthenticationError(
                 f"Failed to obtain access token (status {response.status_code}): {response.text}"
             )
 
-        payload = response.json()
+        try:
+            payload = response.json()
+        except ValueError as exc:
+            raise AuthenticationError("Token endpoint returned invalid JSON") from exc
+
+        if not isinstance(payload, dict):
+            raise AuthenticationError("Token endpoint returned an unexpected payload")
+
         access_token = payload.get("access_token")
         expires_in = payload.get("expires_in", 0)
 
-        if not access_token:
+        if not isinstance(access_token, str) or not access_token:
             raise AuthenticationError("Token endpoint did not return an access_token")
 
         self._access_token = access_token
-        self._expires_at = time.time() + float(expires_in or 0)
+        try:
+            self._expires_at = time.time() + float(expires_in or 0)
+        except (TypeError, ValueError) as exc:
+            raise AuthenticationError(
+                "Token endpoint returned an invalid expires_in value"
+            ) from exc
         return self._access_token

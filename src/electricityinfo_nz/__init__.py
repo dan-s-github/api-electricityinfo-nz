@@ -1,15 +1,27 @@
 """Electricity Info NZ Market Prices API client."""
 
 from .client import MarketPricesClient
-from .exceptions import AuthenticationError, MarketPricesAPIError, NotFoundError, RateLimitError, ValidationError
+from .exceptions import (
+    AuthenticationError,
+    MarketPricesAPIError,
+    NotFoundError,
+    RateLimitError,
+    ResponseFormatError,
+    TransportError,
+    ValidationError,
+)
+from .schedule_names import resolve_schedule_name
 
 __version__ = "0.1.0"
 
 __all__ = [
-    "MarketPricesClient",
-    "MarketPricesAPIError",
     "AuthenticationError",
+    "MarketPricesAPIError",
+    "MarketPricesClient",
     "NotFoundError",
-    "ValidationError",
     "RateLimitError",
+    "ResponseFormatError",
+    "TransportError",
+    "ValidationError",
+    "resolve_schedule_name",
 ]

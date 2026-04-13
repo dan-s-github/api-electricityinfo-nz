@@ -16,3 +16,11 @@ class ValidationError(MarketPricesAPIError):
 
 class RateLimitError(MarketPricesAPIError):
     """Raised when rate limits are exceeded."""
+
+
+class ResponseFormatError(MarketPricesAPIError):
+    """Raised when the API response cannot be parsed safely."""
+
+
+class TransportError(MarketPricesAPIError):
+    """Raised when a network or request transport error occurs."""

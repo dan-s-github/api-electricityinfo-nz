@@ -1,21 +1,92 @@
-from typing import Dict, List, Optional
+from collections.abc import Mapping
+
 import requests
 
+from ..constants import DEFAULT_TIMEOUT
+from ..exceptions import ResponseFormatError, ValidationError
 from ..models import ScheduleDetails
-from ..utils import parse_price_detail
+from ..utils import parse_datetime, parse_price_detail
+
+QueryParamValue = str | int | float
+QueryParams = dict[str, QueryParamValue | None]
+ResolvedQueryParams = dict[str, QueryParamValue]
+VALID_MARKET_TYPES = {"E", "R"}
+VALID_ISLANDS = {"NI", "SI"}
 
 
-QueryParams = Dict[str, object]
-
-
-def _clean_params(params: QueryParams) -> QueryParams:
+def _clean_params(params: QueryParams) -> ResolvedQueryParams:
     return {k: v for k, v in params.items() if v is not None}
 
 
-def _format_array(values: Optional[List[str]]) -> Optional[str]:
-    if values is None:
+def _format_array(values: list[str] | None) -> str | None:
+    if not values:
         return None
     return ",".join(values)
+
+
+def _validate_datetime_parameter(name: str, value: str | None) -> None:
+    if value is None:
+        return
+
+    try:
+        parse_datetime(value)
+    except ResponseFormatError as exc:
+        raise ValidationError(f"Invalid {name!r} datetime parameter: {value!r}") from exc
+
+
+def _validate_common_price_filters(
+    market_type: str,
+    nodes: list[str] | None,
+    from_datetime: str | None,
+    to_datetime: str | None,
+    back: int | None,
+    forward: int | None,
+    island: str | None,
+    offset: int | None,
+) -> None:
+    if market_type not in VALID_MARKET_TYPES:
+        raise ValidationError("market_type must be one of: E, R")
+
+    if island is not None and island not in VALID_ISLANDS:
+        raise ValidationError("island must be one of: NI, SI")
+
+    if back is not None and not 1 <= back <= 48:
+        raise ValidationError("back must be between 1 and 48")
+
+    if forward is not None and not 1 <= forward <= 48:
+        raise ValidationError("forward must be between 1 and 48")
+
+    if offset is not None and offset < 0:
+        raise ValidationError("offset must be greater than or equal to 0")
+
+    if (from_datetime is not None or to_datetime is not None) and (
+        back is not None or forward is not None
+    ):
+        raise ValidationError("from/to cannot be combined with back/forward")
+
+    _validate_datetime_parameter("from", from_datetime)
+    _validate_datetime_parameter("to", to_datetime)
+
+    if nodes is not None and any(not isinstance(node, str) or not node for node in nodes):
+        raise ValidationError("nodes must contain only non-empty strings")
+
+
+def _parse_schedule_details(payload: object, *, default_schedule: str = "") -> ScheduleDetails:
+    if not isinstance(payload, dict):
+        raise ResponseFormatError("Invalid schedule details payload in API response")
+
+    schedule = payload.get("schedule", default_schedule)
+    if not isinstance(schedule, str) or not schedule:
+        raise ResponseFormatError("Invalid or missing 'schedule' in API response")
+
+    prices_payload = payload.get("prices", [])
+    if not isinstance(prices_payload, list):
+        raise ResponseFormatError("Invalid 'prices' payload in API response")
+
+    return ScheduleDetails(
+        schedule=schedule,
+        prices=[parse_price_detail(item) for item in prices_payload],
+    )
 
 
 def get_schedule_prices(
@@ -23,14 +94,32 @@ def get_schedule_prices(
     base_url: str,
     schedule: str,
     market_type: str,
-    nodes: Optional[List[str]] = None,
-    from_datetime: Optional[str] = None,
-    to_datetime: Optional[str] = None,
-    back: Optional[int] = None,
-    forward: Optional[int] = None,
-    island: Optional[str] = None,
-    offset: Optional[int] = None,
+    nodes: list[str] | None = None,
+    from_datetime: str | None = None,
+    to_datetime: str | None = None,
+    back: int | None = None,
+    forward: int | None = None,
+    island: str | None = None,
+    offset: int | None = None,
+    *,
+    headers: Mapping[str, str] | None = None,
+    timeout: float = DEFAULT_TIMEOUT,
 ) -> ScheduleDetails:
+    """Return prices for a single schedule."""
+    if not schedule:
+        raise ValidationError("schedule is required")
+
+    _validate_common_price_filters(
+        market_type,
+        nodes,
+        from_datetime,
+        to_datetime,
+        back,
+        forward,
+        island,
+        offset,
+    )
+
     url = f"{base_url}/schedules/{schedule}/prices"
     params = _clean_params(
         {
@@ -44,26 +133,45 @@ def get_schedule_prices(
             "offset": offset,
         }
     )
-    resp = session.get(url, params=params)
+    resp = session.get(url, params=params, headers=headers, timeout=timeout)
     resp.raise_for_status()
     payload = resp.json()
-    prices = [parse_price_detail(item) for item in payload.get("prices", [])]
-    return ScheduleDetails(schedule=payload.get("schedule", schedule), prices=prices)
+    return _parse_schedule_details(payload, default_schedule=schedule)
 
 
 def get_prices(
     session: requests.Session,
     base_url: str,
-    schedules: List[str],
+    schedules: list[str],
     market_type: str,
-    nodes: Optional[List[str]] = None,
-    from_datetime: Optional[str] = None,
-    to_datetime: Optional[str] = None,
-    back: Optional[int] = None,
-    forward: Optional[int] = None,
-    island: Optional[str] = None,
-    offset: Optional[int] = None,
-) -> List[ScheduleDetails]:
+    nodes: list[str] | None = None,
+    from_datetime: str | None = None,
+    to_datetime: str | None = None,
+    back: int | None = None,
+    forward: int | None = None,
+    island: str | None = None,
+    offset: int | None = None,
+    *,
+    headers: Mapping[str, str] | None = None,
+    timeout: float = DEFAULT_TIMEOUT,
+) -> list[ScheduleDetails]:
+    """Return prices across one or more schedules."""
+    if not schedules or any(
+        not isinstance(schedule, str) or not schedule for schedule in schedules
+    ):
+        raise ValidationError("schedules must contain at least one non-empty schedule")
+
+    _validate_common_price_filters(
+        market_type,
+        nodes,
+        from_datetime,
+        to_datetime,
+        back,
+        forward,
+        island,
+        offset,
+    )
+
     url = f"{base_url}/prices"
     params = _clean_params(
         {
@@ -78,20 +186,17 @@ def get_prices(
             "offset": offset,
         }
     )
-    resp = session.get(url, params=params)
+    resp = session.get(url, params=params, headers=headers, timeout=timeout)
     resp.raise_for_status()
     payload = resp.json()
-    # API can return either {"schedules": [...]} or directly [...]
     if isinstance(payload, list):
         schedules_payload = payload
     elif isinstance(payload, dict):
         schedules_payload = payload.get("schedules", [])
     else:
-        schedules_payload = []
-    return [
-        ScheduleDetails(
-            schedule=item.get("schedule", ""),
-            prices=[parse_price_detail(p) for p in item.get("prices", [])],
-        )
-        for item in schedules_payload
-    ]
+        raise ResponseFormatError("Invalid prices payload in API response")
+
+    if not isinstance(schedules_payload, list):
+        raise ResponseFormatError("Invalid 'schedules' payload in API response")
+
+    return [_parse_schedule_details(item) for item in schedules_payload]

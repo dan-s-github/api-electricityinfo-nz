@@ -31,14 +31,23 @@ dependencies = [
 ]
 urls."Bug Tracker" = "https://github.com/dan-s-github/api-electricityinfo-nz/issues"
 urls.Changelog = "https://github.com/dan-s-github/api-electricityinfo-nz/blob/main/CHANGELOG.md"
+urls.documentation = "https://github.com/dan-s-github/api-electricityinfo-nz/blob/main/docs/index.md"
 urls.repository = "https://github.com/dan-s-github/api-electricityinfo-nz"
 
 [dependency-groups]
 dev = [
+  "mypy>=1.11",
   "pre-commit",
   "pytest>=7.4",
   "pytest-cov>=4.1",
   "pyyaml>=6.0",
+  "types-requests>=2.32.0",
+]
+docs = [
+  "furo>=2024.8.6",
+  "myst-parser>=3.0.1",
+  "sphinx>=7,<9",
+  "sphinx-autobuild>=2024.10.3",
 ]
 
 [tool.setuptools.packages.find]
@@ -94,6 +103,7 @@ lint.ignore = [
   "D401", # First line of docstring should be in imperative mood
 ]
 lint.per-file-ignores."conftest.py" = ["D100"]
+lint.per-file-ignores."docs/conf.py" = ["D100"]
 lint.per-file-ignores."tests/**/*" = ["D100", "D101", "D102", "D103", "D104", "S101"]
 lint.isort.known-first-party = ["electricityinfo_nz", "tests"]
 
@@ -114,7 +124,7 @@ overrides = [
 
 [tool.semantic_release]
 version_toml = ["pyproject.toml:project.version"]
-version_variables = ["src/electricityinfo_nz/__init__.py:__version__"]
+version_variables = ["src/electricityinfo_nz/__init__.py:__version__", "docs/conf.py:release"]
 build_command = """
 pip install uv
 uv lock
