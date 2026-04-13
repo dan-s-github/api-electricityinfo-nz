@@ -1,16 +1,16 @@
 [build-system]
-requires = ["setuptools>=77.0.3"]
 build-backend = "setuptools.build_meta"
+requires = [ "setuptools>=77.0.3" ]
 
 [project]
 name = "electricityinfo-nz"
 version = "0.1.0"
 description = "Python client for the WITS Market Prices API (Electricity Info NZ)"
 readme = "README.md"
-requires-python = ">=3.9"
+keywords = [ "api", "electricity", "market-prices", "new-zealand", "wits" ]
 license = "MIT"
-authors = [{ name = "Daniel M", email = "daniel@mohni.info" }]
-keywords = ["electricity", "wits", "market-prices", "new-zealand", "api"]
+authors = [ { name = "Daniel M", email = "daniel@mohni.info" } ]
+requires-python = ">=3.9"
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
@@ -27,7 +27,7 @@ classifiers = [
 ]
 dependencies = [
   "python-dateutil>=2.8.2",
-  "requests>=2.31.0",
+  "requests>=2.31",
 ]
 urls."Bug Tracker" = "https://github.com/dan-s-github/api-electricityinfo-nz/issues"
 urls.Changelog = "https://github.com/dan-s-github/api-electricityinfo-nz/blob/main/CHANGELOG.md"
@@ -40,8 +40,8 @@ dev = [
   "pre-commit",
   "pytest>=7.4",
   "pytest-cov>=4.1",
-  "pyyaml>=6.0",
-  "types-requests>=2.32.0",
+  "pyyaml>=6",
+  "types-requests>=2.32",
 ]
 docs = [
   "furo>=2024.8.6",
@@ -50,35 +50,8 @@ docs = [
   "sphinx-autobuild>=2024.10.3",
 ]
 
-[tool.setuptools.packages.find]
-where = ["src"]
-
-[tool.pyproject-fmt]
-max_supported_python = "3.14"
-
-[tool.pytest.ini_options]
-addopts = [
-  "-v",
-  "-Wonce",
-  "--cov=electricityinfo_nz",
-  "--cov-report=term",
-  "--cov-report=xml",
-]
-pythonpath = ["src"]
-
-[tool.coverage]
-run.branch = true
-paths.source = [
-  "src",
-  ".tox/**/site-packages",
-]
-report.exclude_lines = [
-  "@overload",
-  'if __name__ == "__main__":',
-  "if TYPE_CHECKING",
-  "pragma: no cover",
-  "raise NotImplementedError",
-]
+[tool.setuptools]
+packages.find.where = [ "src" ]
 
 [tool.ruff]
 line-length = 100
@@ -102,10 +75,37 @@ lint.ignore = [
   "D212", # Multi-line docstring summary should start at the first line
   "D401", # First line of docstring should be in imperative mood
 ]
-lint.per-file-ignores."conftest.py" = ["D100"]
-lint.per-file-ignores."docs/conf.py" = ["D100"]
-lint.per-file-ignores."tests/**/*" = ["D100", "D101", "D102", "D103", "D104", "S101"]
-lint.isort.known-first-party = ["electricityinfo_nz", "tests"]
+lint.per-file-ignores."conftest.py" = [ "D100" ]
+lint.per-file-ignores."docs/conf.py" = [ "D100" ]
+lint.per-file-ignores."tests/**/*" = [ "D100", "D101", "D102", "D103", "D104", "S101" ]
+lint.isort.known-first-party = [ "electricityinfo_nz", "tests" ]
+
+[tool.pyproject-fmt]
+max_supported_python = "3.14"
+
+[tool.pytest]
+ini_options.addopts = [
+  "-v",
+  "-Wonce",
+  "--cov=electricityinfo_nz",
+  "--cov-report=term",
+  "--cov-report=xml",
+]
+ini_options.pythonpath = [ "src" ]
+
+[tool.coverage]
+run.branch = true
+paths.source = [
+  "src",
+  ".tox/**/site-packages",
+]
+report.exclude_lines = [
+  "@overload",
+  'if __name__ == "__main__":',
+  "if TYPE_CHECKING",
+  "pragma: no cover",
+  "raise NotImplementedError",
+]
 
 [tool.mypy]
 mypy_path = "src/"
@@ -117,14 +117,14 @@ no_implicit_optional = true
 show_error_codes = true
 warn_unreachable = true
 warn_unused_ignores = true
-exclude = ["setup.py"]
+exclude = [ "setup.py" ]
 overrides = [
   { module = "tests.*", allow_untyped_defs = true },
 ]
 
 [tool.semantic_release]
-version_toml = ["pyproject.toml:project.version"]
-version_variables = ["src/electricityinfo_nz/__init__.py:__version__", "docs/conf.py:release"]
+version_toml = [ "pyproject.toml:project.version" ]
+version_variables = [ "src/electricityinfo_nz/__init__.py:__version__", "docs/conf.py:release" ]
 build_command = """
 pip install uv
 uv lock
@@ -142,6 +142,6 @@ changelog.exclude_commit_patterns = [
   "test(?:\\([^)]*?\\))?: .+",
   "build\\((?!deps\\): .+)",
   "Merged? .*",
-  "Initial [Cc]ommit.*",
+  "Initial [Cc]ommit.*",         # codespell:ignore
 ]
 changelog.environment.keep_trailing_newline = true

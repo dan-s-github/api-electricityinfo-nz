@@ -1,6 +1,5 @@
 """Integration tests for the get_schedule_prices endpoint."""
 
-
 import pytest
 
 
@@ -20,7 +19,7 @@ class TestSchedulePricesIntegration:
             result = client.get_schedule_prices(
                 schedule=schedule_name,
                 market_type=market_type,
-                back=10  # Get last 10 records
+                back=10,  # Get last 10 records
             )
 
             assert result is not None
@@ -45,7 +44,7 @@ class TestSchedulePricesIntegration:
                 schedule=schedule.schedule,
                 market_type=schedule.market_type,
                 nodes=node_names,
-                back=5
+                back=5,
             )
 
             assert result is not None
@@ -90,7 +89,7 @@ class TestSchedulePricesIntegration:
                     schedule=schedule.schedule,
                     market_type=schedule.market_type,
                     island=island,
-                    back=5
+                    back=5,
                 )
 
                 assert result is not None
@@ -107,9 +106,7 @@ class TestSchedulePricesIntegration:
         for schedule in all_schedules:
             try:
                 result = client.get_schedule_prices(
-                    schedule=schedule.schedule,
-                    market_type=schedule.market_type,
-                    forward=5
+                    schedule=schedule.schedule, market_type=schedule.market_type, forward=5
                 )
 
                 assert result is not None
@@ -147,10 +144,7 @@ class TestSchedulePricesIntegration:
         for schedule in all_schedules:
             try:
                 result = client.get_schedule_prices(
-                    schedule=schedule.schedule,
-                    market_type=schedule.market_type,
-                    back=5,
-                    forward=5
+                    schedule=schedule.schedule, market_type=schedule.market_type, back=5, forward=5
                 )
 
                 assert result is not None

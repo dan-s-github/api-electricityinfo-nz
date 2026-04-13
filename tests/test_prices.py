@@ -1,6 +1,5 @@
 """Integration tests for the get_prices endpoint."""
 
-
 import pytest
 
 
@@ -15,11 +14,7 @@ class TestPricesIntegration:
         schedule_names = [s.schedule for s in all_schedules]
         market_type = all_schedules[0].market_type
 
-        results = client.get_prices(
-            schedules=schedule_names,
-            market_type=market_type,
-            back=10
-        )
+        results = client.get_prices(schedules=schedule_names, market_type=market_type, back=10)
 
         assert isinstance(results, list)
         # Note: API may return empty results for some schedule combinations
@@ -37,9 +32,7 @@ class TestPricesIntegration:
         # Test back parameter for all schedules
         for schedule in all_schedules:
             results = client.get_prices(
-                schedules=[schedule.schedule],
-                market_type=schedule.market_type,
-                back=10
+                schedules=[schedule.schedule], market_type=schedule.market_type, back=10
             )
 
             assert isinstance(results, list)
@@ -60,9 +53,7 @@ class TestPricesIntegration:
         for schedule in all_schedules:
             try:
                 results = client.get_prices(
-                    schedules=[schedule.schedule],
-                    market_type=schedule.market_type,
-                    forward=5
+                    schedules=[schedule.schedule], market_type=schedule.market_type, forward=5
                 )
 
                 assert isinstance(results, list)
@@ -141,7 +132,7 @@ class TestPricesIntegration:
                     schedules=[schedule.schedule],
                     market_type=schedule.market_type,
                     back=5,
-                    forward=5
+                    forward=5,
                 )
 
                 assert isinstance(results, list)

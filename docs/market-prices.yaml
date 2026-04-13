@@ -17,93 +17,90 @@ info:
 
 
     * A single schedule can be queried through the `/schedules/{schedule}/prices` path.
-    
+
     * Multiple schedules can be queried through the `/prices` path, identifying one or more schedules in the `schedules` query parameter.
-    
-    
+
+
     Schedules supported by this API can be obtained through a query to `/schedules`.
-    
-    
+
+
     In either case, the market type being queried must be included in the `market-type` query parameter.
 
     * Check out the WITS portal: <https://www2.electricityinfo.co.nz/>
 
 
     ## API Parameters ##
-    
+
     ### Range Requests ###
-    
+
     Pricing data can be filtered by a combination of trading datetime or sliding trading period ranges.
-    
-    
+
+
     The available query parameters for specifying a range are:
-    
+
     * `from`
-    
+
     * `to`
-    
+
     * `back`
-    
+
     * `forward`
-    
-    
+
+
     **From and To**
-    
-    
-    The `from` and `to` parameters specify a date-time for which to filter queried data by. None, one or both parameters may be provided. The date-time must conform to the `RFC3339` standard formatting, e.g. `yyyy-MM-dd'T'HH:mm:ssXXX`. 
-    
-    
+
+
+    The `from` and `to` parameters specify a date-time for which to filter queried data by. None, one or both parameters may be provided. The date-time must conform to the `RFC3339` standard formatting, e.g. `yyyy-MM-dd'T'HH:mm:ssXXX`.
+
+
     If both `from` and `to` are provided, this is an inclusive window of time to query data for.
-        
-    
+
+
     If a `from` parameter is provided without a corresponding `to` parameter, this represents a query of data filtered from the trading period implied by the `from` date-time forward as far as possible for the queried schedule(s).
-    
-    
+
+
     If a `to` parameter is provided without a corresponding `from` parameter, this represents a query of data filtered from the oldest data available forward to the trading period implied by the `to` date-time.
-    
-    
+
+
     **Back and Forward**
-    
-    
+
+
     Unlike the `from` and `to` parameters, the `back` and `forward` filter can be used to identify a sliding window of data to query. A request cannot include both `from` and/or `to` parameters __and__ `back` and/or `forward`.
-    
-    
+
+
     The `back` parameter specifies a number of trading periods _before_ the current trading period to include data for. Correspondingly, the `to` parameter specifies a number of trading periods _ahead_ of the current trading period to include data for.
-    
-    
+
+
     For example, if the current trading period is `23` (11:00:00 NZT - 11:29:59 NZT) and both `back` and `forward` are set to `5`, data from trading periods `18` - `28` will be queried. Note that not all schedules will have data available beyond the current trading period.
-    
-    
+
+
     ### Node Filters ###
-    
+
     The pricing data can also be filtered by providing the ID of one or more `nodes` (Grid injection or extraction points) in the corresponding query parameter. If this parameter is included, only data for nodes in the supplied list will be returned.
-    
+
 
     Nodes supported by this API can be obtained through a query to `/nodes`.
 
 
     ### Island Filter ###
-    
+
     The data can also be filtered by `Island` (`NI` or `SI`). When the `island` query parameter is set, only information pertaining to that island will be returned.
-    
+
 
     ### Pagination ###
 
     This API supports basic pagination. A maximum of 10,000 records will be returned for any API call. If further data is required, set the `offset` query parameter to retrieve further data. For example, to retrieve the second set of 10,000 records set the `offset` query parameter to `10000`. Subsequently to retrieve the third set of 10,000 records, set the `offset` parameter to `20000`.
   version: 0.0.1
 
-
 servers:
-  - url: 'https://api.electricityinfo.co.nz/api/market-prices/v1'
+  - url: "https://api.electricityinfo.co.nz/api/market-prices/v1"
     variables: {}
     description: Live
 
-    
 security:
   - oAuthClientCredentials: []
 
 paths:
-     
   /schedules:
     get:
       tags:
@@ -111,54 +108,53 @@ paths:
       summary: Retrieve a list of schedules for which pricing data is currently available
       responses:
         "200":
-          $ref: '#/components/responses/listSchedulesResponse'
+          $ref: "#/components/responses/listSchedulesResponse"
         "400":
-          $ref: '#/components/responses/badRequestResponse'
+          $ref: "#/components/responses/badRequestResponse"
         "403":
-          $ref: '#/components/responses/authorisationErrorResponse'
+          $ref: "#/components/responses/authorisationErrorResponse"
         "405":
-          $ref: '#/components/responses/methodNotAllowedResponse'
+          $ref: "#/components/responses/methodNotAllowedResponse"
         "406":
-          $ref: '#/components/responses/unacceptableResponse'
+          $ref: "#/components/responses/unacceptableResponse"
         "500":
-          $ref: '#/components/responses/internalErrorResponse'
-        
-          
+          $ref: "#/components/responses/internalErrorResponse"
+
   /schedules/{schedule}/prices:
     parameters:
       - in: path
         name: schedule
         required: true
         schema:
-          $ref: '#/components/schemas/schedule'
-      - $ref: '#/components/parameters/marketType'
-      - $ref: '#/components/parameters/nodes'
-      - $ref: '#/components/parameters/from'
-      - $ref: '#/components/parameters/to'
-      - $ref: '#/components/parameters/back'
-      - $ref: '#/components/parameters/forward'
-      - $ref: '#/components/parameters/island'
-      - $ref: '#/components/parameters/offset'
+          $ref: "#/components/schemas/schedule"
+      - $ref: "#/components/parameters/marketType"
+      - $ref: "#/components/parameters/nodes"
+      - $ref: "#/components/parameters/from"
+      - $ref: "#/components/parameters/to"
+      - $ref: "#/components/parameters/back"
+      - $ref: "#/components/parameters/forward"
+      - $ref: "#/components/parameters/island"
+      - $ref: "#/components/parameters/offset"
     get:
       tags:
-          - Market Prices
+        - Market Prices
       summary: Retrieve a list of prices for the given schedule
       responses:
         "200":
-          $ref: '#/components/responses/getSchedulePricesResponse'  
+          $ref: "#/components/responses/getSchedulePricesResponse"
         "400":
-          $ref: '#/components/responses/badRequestResponse'
+          $ref: "#/components/responses/badRequestResponse"
         "403":
-          $ref: '#/components/responses/authorisationErrorResponse'
+          $ref: "#/components/responses/authorisationErrorResponse"
         "404":
-          $ref: '#/components/responses/notFoundResponse'
+          $ref: "#/components/responses/notFoundResponse"
         "405":
-          $ref: '#/components/responses/methodNotAllowedResponse'
+          $ref: "#/components/responses/methodNotAllowedResponse"
         "406":
-          $ref: '#/components/responses/unacceptableResponse'
+          $ref: "#/components/responses/unacceptableResponse"
         "500":
-          $ref: '#/components/responses/internalErrorResponse'
-          
+          $ref: "#/components/responses/internalErrorResponse"
+
   /nodes:
     get:
       tags:
@@ -166,46 +162,46 @@ paths:
       summary: Retrieve a list of GXP/GIP supported by this API
       responses:
         "200":
-          $ref: '#/components/responses/listNodesResponse'
+          $ref: "#/components/responses/listNodesResponse"
         "400":
-          $ref: '#/components/responses/badRequestResponse'
+          $ref: "#/components/responses/badRequestResponse"
         "403":
-          $ref: '#/components/responses/authorisationErrorResponse'
+          $ref: "#/components/responses/authorisationErrorResponse"
         "405":
-          $ref: '#/components/responses/methodNotAllowedResponse'
+          $ref: "#/components/responses/methodNotAllowedResponse"
         "406":
-          $ref: '#/components/responses/unacceptableResponse'
+          $ref: "#/components/responses/unacceptableResponse"
         "500":
-          $ref: '#/components/responses/internalErrorResponse'
-          
+          $ref: "#/components/responses/internalErrorResponse"
+
   /prices:
-    get: 
+    get:
       tags:
         - Market Prices
       summary: Retrieve a list of prices across schedules
       parameters:
-        - $ref: '#/components/parameters/schedules'
-        - $ref: '#/components/parameters/marketType'
-        - $ref: '#/components/parameters/nodes'
-        - $ref: '#/components/parameters/from'
-        - $ref: '#/components/parameters/to'
-        - $ref: '#/components/parameters/back'
-        - $ref: '#/components/parameters/forward'
-        - $ref: '#/components/parameters/island'
-        - $ref: '#/components/parameters/offset'
+        - $ref: "#/components/parameters/schedules"
+        - $ref: "#/components/parameters/marketType"
+        - $ref: "#/components/parameters/nodes"
+        - $ref: "#/components/parameters/from"
+        - $ref: "#/components/parameters/to"
+        - $ref: "#/components/parameters/back"
+        - $ref: "#/components/parameters/forward"
+        - $ref: "#/components/parameters/island"
+        - $ref: "#/components/parameters/offset"
       responses:
         "200":
-          $ref: '#/components/responses/getPricesResponse'
+          $ref: "#/components/responses/getPricesResponse"
         "400":
-          $ref: '#/components/responses/badRequestResponse'
+          $ref: "#/components/responses/badRequestResponse"
         "403":
-          $ref: '#/components/responses/authorisationErrorResponse'
+          $ref: "#/components/responses/authorisationErrorResponse"
         "405":
-          $ref: '#/components/responses/methodNotAllowedResponse'
+          $ref: "#/components/responses/methodNotAllowedResponse"
         "406":
-          $ref: '#/components/responses/unacceptableResponse'
+          $ref: "#/components/responses/unacceptableResponse"
         "500":
-          $ref: '#/components/responses/internalErrorResponse'        
+          $ref: "#/components/responses/internalErrorResponse"
 components:
   securitySchemes:
     oAuthClientCredentials:
@@ -215,35 +211,34 @@ components:
         clientCredentials:
           tokenUrl: /login/oauth2/token
           scopes: {}
-          
+
   parameters:
-    
     schedules:
       in: query
       name: schedules
       style: form
-      explode: false     
+      explode: false
       required: true
       schema:
         type: array
         items:
-          $ref: '#/components/schemas/schedule'
+          $ref: "#/components/schemas/schedule"
     marketType:
       in: query
       name: marketType
       schema:
-        $ref: '#/components/schemas/marketType'
+        $ref: "#/components/schemas/marketType"
       required: true
       description: Mandatory market type filter
     nodes:
       in: query
       name: nodes
       style: form
-      explode: false    
+      explode: false
       schema:
-        type: array      
+        type: array
         items:
-          $ref: '#/components/schemas/node'
+          $ref: "#/components/schemas/node"
       required: false
       description: Optional node list filter
     from:
@@ -284,32 +279,31 @@ components:
       in: query
       name: island
       schema:
-        $ref: '#/components/schemas/island'
+        $ref: "#/components/schemas/island"
       required: false
       description: Return pricing data only for the selected island
     offset:
       in: query
       name: offset
       schema:
-        $ref: '#/components/schemas/offset'
+        $ref: "#/components/schemas/offset"
       required: false
       description: Optional offset parameter for basic pagination
-      
+
   responses:
-  
     getPricesResponse:
       description: Successfully received prices
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/getPricesResponse'
-         
+            $ref: "#/components/schemas/getPricesResponse"
+
     listSchedulesResponse:
       description: Successfully listed schedules
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/listSchedulesResponse'
+            $ref: "#/components/schemas/listSchedulesResponse"
 
     listNodesResponse:
       description: Successfully listed schedules
@@ -318,110 +312,109 @@ components:
           schema:
             type: array
             items:
-              $ref: '#/components/schemas/node'
-              
+              $ref: "#/components/schemas/node"
+
     getSchedulePricesResponse:
       description: Successfully received prices
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/scheduleDetails'
-         
+            $ref: "#/components/schemas/scheduleDetails"
+
     badRequestResponse:
       description: Client has supplied invalid parameters
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/fault'
+            $ref: "#/components/schemas/fault"
           examples:
             schemaFailure:
               summary: Invalid API Request
-              value: 
+              value:
                 status: 400
-                code: 'BAD_REQUEST'
-                message: 'Invalid Request'
-                detail: '52 is greater than maximum 50 for paramter "tradingPeriod"'
-                timestamp: '20210406T11:54:33+13:00'
+                code: "BAD_REQUEST"
+                message: "Invalid Request"
+                detail: '52 is greater than maximum 50 for parameter "tradingPeriod"'
+                timestamp: "20210406T11:54:33+13:00"
     authorisationErrorResponse:
       description: Resource not found
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/fault'
+            $ref: "#/components/schemas/fault"
           examples:
             schemaFailure:
               summary: Client not authorised to access resource
-              value: 
+              value:
                 status: 403
-                code: 'FORBIDDEN'
-                message: 'Invalid or missing authorisation token'
-                timestamp: '20210406T11:54:33+13:00'
+                code: "FORBIDDEN"
+                message: "Invalid or missing authorisation token"
+                timestamp: "20210406T11:54:33+13:00"
     notFoundResponse:
       description: Resource not found
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/fault'
+            $ref: "#/components/schemas/fault"
           examples:
             schemaFailure:
               summary: Schedule not found
-              value: 
+              value:
                 status: 404
-                code: 'NOT_FOUND'
+                code: "NOT_FOUND"
                 message: 'Schedule "ABC" not found'
-                timestamp: '20210406T11:54:33+13:00'
+                timestamp: "20210406T11:54:33+13:00"
     methodNotAllowedResponse:
       description: Method not allowed
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/fault'
+            $ref: "#/components/schemas/fault"
           examples:
             schemaFailure:
               summary: Invalid accept header
-              value: 
+              value:
                 status: 405
-                code: 'METHOD_NOT_ALLOWED'
+                code: "METHOD_NOT_ALLOWED"
                 message: 'HTTP Method "PUT" is not valid for this operation'
-                timestamp: '20210406T11:54:33+13:00'
+                timestamp: "20210406T11:54:33+13:00"
     unacceptableResponse:
       description: Content type not produced
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/fault'
+            $ref: "#/components/schemas/fault"
           examples:
             schemaFailure:
               summary: Invalid accept header
-              value: 
+              value:
                 status: 406
-                code: 'NOT_ACCEPTABLE'
+                code: "NOT_ACCEPTABLE"
                 message: 'Requested content type "application/xml" is not produced by this API'
                 detail: 'Only "application/json" is produced by this API'
-                timestamp: '20210406T11:54:33+13:00'
+                timestamp: "20210406T11:54:33+13:00"
     internalErrorResponse:
       description: Content type not produced
       content:
         application/json:
           schema:
-            $ref: '#/components/schemas/fault'
+            $ref: "#/components/schemas/fault"
           examples:
             schemaFailure:
               summary: Invalid accept header
-              value: 
+              value:
                 status: 500
-                code: 'INTERNAL_SERVER_ERROR'
-                message: 'Internal server error. Please try again later.'
-                timestamp: '20210406T11:54:33+13:00'
-            
+                code: "INTERNAL_SERVER_ERROR"
+                message: "Internal server error. Please try again later."
+                timestamp: "20210406T11:54:33+13:00"
+
   schemas:
-  
     schedule:
       type: string
       example: RTP
     marketType:
       type: string
-      enum: [E,R]
+      enum: [E, R]
       example: E
     island:
       type: string
@@ -453,7 +446,7 @@ components:
     tradingDateTime:
       type: string
       format: datetime
-      example: '2021-06-16T10:30:00+12:00'
+      example: "2021-06-16T10:30:00+12:00"
     tradingPeriod:
       type: integer
       minimum: 1
@@ -467,31 +460,31 @@ components:
     lastRunTime:
       type: string
       format: datetime
-      description: |- 
-        Solution run-time 
-      example: '2021-03-16T10:00:00+13:00'
-      
+      description: |-
+        Solution run-time
+      example: "2021-03-16T10:00:00+13:00"
+
     listSchedulesResponse:
       type: array
       items:
         type: object
         properties:
           schedule:
-            $ref: '#/components/schemas/schedule'
+            $ref: "#/components/schemas/schedule"
           runType:
-            $ref: '#/components/schemas/runType'
+            $ref: "#/components/schemas/runType"
           marketType:
-            $ref: '#/components/schemas/marketType'
-            
+            $ref: "#/components/schemas/marketType"
+
     getPricesResponse:
       type: object
-      required: 
+      required:
         - schedules
       properties:
         schedules:
           type: array
           items:
-            $ref: '#/components/schemas/scheduleDetails'
+            $ref: "#/components/schemas/scheduleDetails"
 
     scheduleDetails:
       type: object
@@ -500,11 +493,11 @@ components:
         - prices
       properties:
         schedule:
-          $ref: '#/components/schemas/schedule'
+          $ref: "#/components/schemas/schedule"
         prices:
           type: array
           items:
-            $ref: '#/components/schemas/priceDetails'
+            $ref: "#/components/schemas/priceDetails"
 
     priceDetails:
       type: object
@@ -516,25 +509,25 @@ components:
         - node
       properties:
         schedule:
-          $ref: '#/components/schemas/schedule'
+          $ref: "#/components/schemas/schedule"
         tradingDateTime:
-          $ref: '#/components/schemas/tradingDateTime'
+          $ref: "#/components/schemas/tradingDateTime"
         tradingPeriod:
-          $ref: '#/components/schemas/tradingPeriod'
+          $ref: "#/components/schemas/tradingPeriod"
         runType:
-          $ref: '#/components/schemas/runType'
+          $ref: "#/components/schemas/runType"
         lastRunTime:
-          $ref: '#/components/schemas/lastRunTime'
+          $ref: "#/components/schemas/lastRunTime"
         node:
-          $ref: '#/components/schemas/node'
+          $ref: "#/components/schemas/node"
         price:
-          $ref: '#/components/schemas/price'
+          $ref: "#/components/schemas/price"
         price6s:
-          $ref: '#/components/schemas/price'
+          $ref: "#/components/schemas/price"
         price60s:
-          $ref: '#/components/schemas/price'
+          $ref: "#/components/schemas/price"
         reserveNode:
-          $ref: '#/components/schemas/node'
+          $ref: "#/components/schemas/node"
     fault:
       description: Standard fault model
       type: object
@@ -565,4 +558,4 @@ components:
           type: string
           format: datetime
           description: Server timestamp of failure
-          example: '20210325T10:00:00+13:00'
+          example: "20210325T10:00:00+13:00"

@@ -67,16 +67,16 @@ Price fields such as `price`, `price6s`, and `price60s` are expressed in **NZD/M
 
 ## Schedule names
 
-| Code | Name |
-|---|---|
-| Final | Final settled prices |
-| Interim | Interim prices |
-| NRSL | Non-responsive long schedule |
-| NRSS | Non-responsive short schedule |
-| PRSL | Price-responsive long schedule |
-| PRSS | Price-responsive short schedule |
-| RTD | Real-time dispatch |
-| WDS | Weekly dispatch schedule |
+| Code    | Name                            |
+| ------- | ------------------------------- |
+| Final   | Final settled prices            |
+| Interim | Interim prices                  |
+| NRSL    | Non-responsive long schedule    |
+| NRSS    | Non-responsive short schedule   |
+| PRSL    | Price-responsive long schedule  |
+| PRSS    | Price-responsive short schedule |
+| RTD     | Real-time dispatch              |
+| WDS     | Weekly dispatch schedule        |
 
 ## Common usage patterns
 
@@ -130,15 +130,15 @@ for node in nodes[:5]:
 
 Both `get_prices()` and `get_schedule_prices()` support the same filters:
 
-| Parameter | Meaning |
-|---|---|
-| `market_type` | Market type: `E` for energy or `R` for reserve. |
-| `nodes` | List of node codes such as `["OTA2201"]`. |
-| `from_datetime` / `to_datetime` | Explicit datetime range. |
-| `back` | Number of past trading periods to fetch. |
-| `forward` | Number of future trading periods to fetch. |
-| `island` | Island filter: `NI` or `SI`. |
-| `offset` | Pagination offset. |
+| Parameter                       | Meaning                                         |
+| ------------------------------- | ----------------------------------------------- |
+| `market_type`                   | Market type: `E` for energy or `R` for reserve. |
+| `nodes`                         | List of node codes such as `["OTA2201"]`.       |
+| `from_datetime` / `to_datetime` | Explicit datetime range.                        |
+| `back`                          | Number of past trading periods to fetch.        |
+| `forward`                       | Number of future trading periods to fetch.      |
+| `island`                        | Island filter: `NI` or `SI`.                    |
+| `offset`                        | Pagination offset.                              |
 
 `from_datetime` / `to_datetime` cannot be combined with `back` / `forward`.
 
