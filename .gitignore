@@ -15,6 +15,9 @@ venv/
 .pytest_cache/
 .coverage
 htmlcov/
+docs/_build/
+docs/electricityinfo_nz*.rst
+docs/modules.rst
 
 # Test secrets
 tests/secrets.yaml

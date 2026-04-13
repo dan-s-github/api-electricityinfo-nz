@@ -1,6 +1,9 @@
 """Integration tests for the get_schedule_prices endpoint."""
 
 
+import pytest
+
+
 class TestSchedulePricesIntegration:
     """Integration tests for get_schedule_prices endpoint."""
 
@@ -47,6 +50,34 @@ class TestSchedulePricesIntegration:
 
             assert result is not None
             assert isinstance(result.prices, list)
+
+    def test_get_schedule_prices_with_single_node(self, all_schedules, client):
+        """Test fetching prices for a single node returns only that node."""
+        assert len(all_schedules) > 0
+
+        for schedule in all_schedules:
+            result = client.get_schedule_prices(
+                schedule=schedule.schedule,
+                market_type=schedule.market_type,
+                back=5,
+            )
+
+            if not result.prices:
+                continue
+
+            node_name = result.prices[0].node
+            single_node_result = client.get_schedule_prices(
+                schedule=schedule.schedule,
+                market_type=schedule.market_type,
+                nodes=[node_name],
+                back=5,
+            )
+
+            assert single_node_result.prices
+            assert all(price.node == node_name for price in single_node_result.prices)
+            return
+
+        pytest.skip("No schedules returned historical prices for single-node retrieval")
 
     def test_get_schedule_prices_with_island(self, all_schedules, client):
         """Test fetching prices filtered by island for all schedules."""

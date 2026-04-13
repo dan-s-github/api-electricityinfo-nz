@@ -5,7 +5,9 @@ To run these tests, create a secrets.yaml file in the tests directory with:
   client_id: your_client_id
   client_secret: your_client_secret
 """
+
 from pathlib import Path
+
 import pytest
 import yaml
 
@@ -18,7 +20,7 @@ def load_secrets():
     if not secrets_path.exists():
         return None
 
-    with open(secrets_path, "r") as f:
+    with open(secrets_path) as f:
         return yaml.safe_load(f)
 
 

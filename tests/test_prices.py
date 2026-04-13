@@ -1,6 +1,9 @@
 """Integration tests for the get_prices endpoint."""
 
 
+import pytest
+
+
 class TestPricesIntegration:
     """Integration tests for get_prices endpoint."""
 
@@ -87,6 +90,42 @@ class TestPricesIntegration:
             print(f"Schedules with forward data: {', '.join(schedules_with_forward)}")
         else:
             print("Schedules with forward data: None")
+
+    def test_get_prices_with_single_node_forward(self, all_schedules, client):
+        """Test fetching forward prices for a single node returns only that node."""
+        assert len(all_schedules) > 0
+
+        for schedule in all_schedules:
+            try:
+                results = client.get_prices(
+                    schedules=[schedule.schedule],
+                    market_type=schedule.market_type,
+                    forward=5,
+                )
+            except Exception as e:
+                assert "401" not in str(e) and "403" not in str(e)
+                continue
+
+            price_entries = [price for result in results for price in result.prices]
+            if not price_entries:
+                continue
+
+            node_name = price_entries[0].node
+            single_node_results = client.get_prices(
+                schedules=[schedule.schedule],
+                market_type=schedule.market_type,
+                nodes=[node_name],
+                forward=5,
+            )
+            single_node_entries = [
+                price for result in single_node_results for price in result.prices
+            ]
+
+            assert single_node_entries
+            assert all(price.node == node_name for price in single_node_entries)
+            return
+
+        pytest.skip("No schedules returned forward prices for single-node retrieval")
 
     def test_get_prices_with_back_and_forward(self, all_schedules, client):
         """Test fetching prices with both back and forward parameters."""
