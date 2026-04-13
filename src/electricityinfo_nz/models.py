@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from dataclasses import dataclass, field
 from datetime import datetime
-from typing import Optional, TypedDict
+from typing import TypedDict
 
 from .schedule_names import resolve_schedule_name
 
@@ -17,8 +19,8 @@ class Schedule:
     """Metadata describing an available schedule."""
 
     schedule: str
-    run_type: Optional[str] = None
-    market_type: Optional[str] = None
+    run_type: str | None = None
+    market_type: str | None = None
     schedule_name: str = field(init=False)
 
     def __post_init__(self) -> None:
@@ -33,13 +35,13 @@ class PriceDetail:
     trading_datetime: datetime
     trading_period: int
     node: str
-    price: Optional[float] = None
-    price6s: Optional[float] = None
-    price60s: Optional[float] = None
-    schedule: Optional[str] = None
-    run_type: Optional[str] = None
-    last_run_time: Optional[datetime] = None
-    reserve_node: Optional[str] = None
+    price: float | None = None
+    price6s: float | None = None
+    price60s: float | None = None
+    schedule: str | None = None
+    run_type: str | None = None
+    last_run_time: datetime | None = None
+    reserve_node: str | None = None
 
     @property
     def schedule_name(self) -> str | None:

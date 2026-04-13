@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 import os
 from collections.abc import Callable
-from typing import Any, Optional, TypeVar
+from typing import Any, TypeVar
 
 import requests
 
@@ -29,10 +31,10 @@ class MarketPricesClient:
 
     def __init__(
         self,
-        client_id: Optional[str] = None,
-        client_secret: Optional[str] = None,
+        client_id: str | None = None,
+        client_secret: str | None = None,
         base_url: str = DEFAULT_BASE_URL,
-        session: Optional[requests.Session] = None,
+        session: requests.Session | None = None,
         timeout: float = DEFAULT_TIMEOUT,
     ) -> None:
         self.base_url = base_url.rstrip("/")
@@ -122,13 +124,13 @@ class MarketPricesClient:
         self,
         schedule: str,
         market_type: str,
-        nodes: Optional[list[str]] = None,
-        from_datetime: Optional[str] = None,
-        to_datetime: Optional[str] = None,
-        back: Optional[int] = None,
-        forward: Optional[int] = None,
-        island: Optional[str] = None,
-        offset: Optional[int] = None,
+        nodes: list[str] | None = None,
+        from_datetime: str | None = None,
+        to_datetime: str | None = None,
+        back: int | None = None,
+        forward: int | None = None,
+        island: str | None = None,
+        offset: int | None = None,
     ) -> ScheduleDetails:
         """Return prices for a single schedule."""
         return self._wrap(
@@ -152,13 +154,13 @@ class MarketPricesClient:
         self,
         schedules: list[str],
         market_type: str,
-        nodes: Optional[list[str]] = None,
-        from_datetime: Optional[str] = None,
-        to_datetime: Optional[str] = None,
-        back: Optional[int] = None,
-        forward: Optional[int] = None,
-        island: Optional[str] = None,
-        offset: Optional[int] = None,
+        nodes: list[str] | None = None,
+        from_datetime: str | None = None,
+        to_datetime: str | None = None,
+        back: int | None = None,
+        forward: int | None = None,
+        island: str | None = None,
+        offset: int | None = None,
     ) -> list[ScheduleDetails]:
         """Return prices across one or more schedules."""
         return self._wrap(

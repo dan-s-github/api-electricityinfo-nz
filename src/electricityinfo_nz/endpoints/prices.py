@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from collections.abc import Mapping
+from typing import Optional, Union
 
 import requests
 
@@ -7,8 +10,8 @@ from ..exceptions import ResponseFormatError, ValidationError
 from ..models import ScheduleDetails
 from ..utils import parse_datetime, parse_price_detail
 
-QueryParamValue = str | int | float
-QueryParams = dict[str, QueryParamValue | None]
+QueryParamValue = Union[str, int, float]
+QueryParams = dict[str, Optional[QueryParamValue]]
 ResolvedQueryParams = dict[str, QueryParamValue]
 VALID_MARKET_TYPES = {"E", "R"}
 VALID_ISLANDS = {"NI", "SI"}
