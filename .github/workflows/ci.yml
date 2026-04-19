@@ -79,11 +79,16 @@ jobs:
       contents: write
 
     steps:
+      - uses: actions/create-github-app-token@v3
+        id: app-token
+        with:
+          client-id: ${{ secrets.APP_CLIENT_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
           ref: ${{ github.sha }}
-
+          token: ${{ steps.app-token.outputs.token }}
       - name: Checkout commit for release
         run: |
           git checkout -B ${{ github.ref_name }} ${{ github.sha }}
@@ -95,12 +100,6 @@ jobs:
         with:
           no_operation_mode: true
           github_token: noop
-
-      - uses: actions/create-github-app-token@v3
-        id: app-token
-        with:
-          client-id: ${{ secrets.APP_CLIENT_ID }}
-          private-key: ${{ secrets.APP_PRIVATE_KEY }}
 
       # On main/dev branch: actual PSR + upload to PyPI & GitHub
       - name: Release
