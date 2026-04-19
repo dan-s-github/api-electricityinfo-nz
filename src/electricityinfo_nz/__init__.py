@@ -12,7 +12,7 @@ from .exceptions import (
 )
 from .schedule_names import resolve_schedule_name
 
-__version__ = "0.1.0"
+__version__ = "1.0.0-rc.1"
 
 __all__ = [
     "AuthenticationError",

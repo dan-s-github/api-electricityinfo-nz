@@ -557,7 +557,7 @@ wheels = [
 
 [[package]]
 name = "electricityinfo-nz"
-version = "0.1.0"
+version = "1.0.0rc1"
 source = { editable = "." }
 dependencies = [
     { name = "python-dateutil" },
@@ -593,7 +593,7 @@ docs = [
 [package.metadata]
 requires-dist = [
     { name = "python-dateutil", specifier = ">=2.8.2" },
-    { name = "requests", specifier = ">=2.31.0" },
+    { name = "requests", specifier = ">=2.31" },
 ]
 
 [package.metadata.requires-dev]
@@ -602,8 +602,8 @@ dev = [
     { name = "pre-commit" },
     { name = "pytest", specifier = ">=7.4" },
     { name = "pytest-cov", specifier = ">=4.1" },
-    { name = "pyyaml", specifier = ">=6.0" },
-    { name = "types-requests", specifier = ">=2.32.0" },
+    { name = "pyyaml", specifier = ">=6" },
+    { name = "types-requests", specifier = ">=2.32" },
 ]
 docs = [
     { name = "furo", specifier = ">=2024.8.6" },
