@@ -57,6 +57,7 @@ repos:
         args: ["src/"]
         pass_filenames: false
         additional_dependencies:
+          - aiohttp
           - requests
           - python-dateutil
           - types-requests

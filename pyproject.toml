@@ -93,7 +93,7 @@ lint.isort.known-first-party = [ "electricityinfo_nz", "tests" ]
 [tool.pyproject-fmt]
 max_supported_python = "3.14"
 
-[tool.pytest]
+[tool.pytest.ini_options]
 minversion = "9.0"
 addopts = [
   "-v",
