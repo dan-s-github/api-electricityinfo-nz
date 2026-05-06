@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 
-import requests
+import aiohttp
 
 from ..constants import DEFAULT_TIMEOUT
 from ..exceptions import ResponseFormatError, ValidationError
@@ -91,8 +91,8 @@ def _parse_schedule_details(payload: object, *, default_schedule: str = "") -> S
     )
 
 
-def get_schedule_prices(
-    session: requests.Session,
+async def get_schedule_prices(
+    session: aiohttp.ClientSession,
     base_url: str,
     schedule: str,
     market_type: str,
@@ -135,14 +135,19 @@ def get_schedule_prices(
             "offset": offset,
         }
     )
-    resp = session.get(url, params=params, headers=headers, timeout=timeout)
-    resp.raise_for_status()
-    payload = resp.json()
+    aio_timeout = aiohttp.ClientTimeout(total=timeout)
+    async with session.get(url, params=params, headers=headers, timeout=aio_timeout) as resp:
+        resp.raise_for_status()
+        try:
+            payload = await resp.json(content_type=None)
+        except ValueError as exc:
+            raise ResponseFormatError(f"Invalid JSON in API response: {exc}") from exc
+
     return _parse_schedule_details(payload, default_schedule=schedule)
 
 
-def get_prices(
-    session: requests.Session,
+async def get_prices(
+    session: aiohttp.ClientSession,
     base_url: str,
     schedules: list[str],
     market_type: str,
@@ -188,9 +193,14 @@ def get_prices(
             "offset": offset,
         }
     )
-    resp = session.get(url, params=params, headers=headers, timeout=timeout)
-    resp.raise_for_status()
-    payload = resp.json()
+    aio_timeout = aiohttp.ClientTimeout(total=timeout)
+    async with session.get(url, params=params, headers=headers, timeout=aio_timeout) as resp:
+        resp.raise_for_status()
+        try:
+            payload = await resp.json(content_type=None)
+        except ValueError as exc:
+            raise ResponseFormatError(f"Invalid JSON in API response: {exc}") from exc
+
     if isinstance(payload, list):
         schedules_payload = payload
     elif isinstance(payload, dict):
