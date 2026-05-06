@@ -200,6 +200,25 @@ async def test_async_get_prices_invalid_payload_raises_response_format_error(mon
         await client.get_prices(["RTP"], market_type="E", back=1)
 
 
+async def test_async_get_schedules_maps_json_decode_error(monkeypatch):
+    session = AsyncDummySession(
+        get_map={
+            "https://api.electricityinfo.co.nz/api/market-prices/v1/schedules": AsyncDummyResponse(
+                json_error=ValueError("No JSON object could be decoded")
+            )
+        }
+    )
+    client = AsyncMarketPricesClient(
+        client_id="id",
+        client_secret=TEST_CLIENT_SECRET,
+        session=session,
+    )
+    monkeypatch.setattr(client, "auth", AsyncDummyAuth())
+
+    with pytest.raises(ResponseFormatError, match="Invalid JSON"):
+        await client.get_schedules()
+
+
 async def test_async_get_schedules_maps_network_errors(monkeypatch):
     client = AsyncMarketPricesClient(
         client_id="id",

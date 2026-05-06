@@ -1,5 +1,5 @@
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 
 import aiohttp
 
@@ -16,8 +16,8 @@ class AsyncOAuth2ClientCredentials:
     client_id: str
     client_secret: str
     base_url: str
+    session: aiohttp.ClientSession
     token_path: str = DEFAULT_TOKEN_PATH
-    session: aiohttp.ClientSession = field(default_factory=aiohttp.ClientSession)
     timeout: float = DEFAULT_TIMEOUT
 
     _access_token: str | None = None

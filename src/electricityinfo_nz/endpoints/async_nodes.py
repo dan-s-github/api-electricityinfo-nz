@@ -21,7 +21,10 @@ async def list_nodes(
     aio_timeout = aiohttp.ClientTimeout(total=timeout)
     async with session.get(url, headers=headers, timeout=aio_timeout) as resp:
         resp.raise_for_status()
-        payload = await resp.json(content_type=None)
+        try:
+            payload = await resp.json(content_type=None)
+        except ValueError as exc:
+            raise ResponseFormatError(f"Invalid JSON in API response: {exc}") from exc
 
     if not isinstance(payload, list):
         raise ResponseFormatError("Invalid nodes payload in API response")

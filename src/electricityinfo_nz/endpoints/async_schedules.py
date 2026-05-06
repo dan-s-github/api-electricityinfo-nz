@@ -21,7 +21,10 @@ async def list_schedules(
     aio_timeout = aiohttp.ClientTimeout(total=timeout)
     async with session.get(url, headers=headers, timeout=aio_timeout) as resp:
         resp.raise_for_status()
-        items = await resp.json(content_type=None)
+        try:
+            items = await resp.json(content_type=None)
+        except ValueError as exc:
+            raise ResponseFormatError(f"Invalid JSON in API response: {exc}") from exc
 
     if not isinstance(items, list):
         raise ResponseFormatError("Invalid schedules payload in API response")

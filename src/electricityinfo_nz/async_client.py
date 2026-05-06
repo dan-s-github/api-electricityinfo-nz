@@ -47,7 +47,7 @@ class AsyncMarketPricesClient:
     ) -> None:
         self.base_url = base_url.rstrip("/")
         self._owns_session = session is None
-        self.session = session or aiohttp.ClientSession()
+        self.session: aiohttp.ClientSession | None = session
         self.timeout = timeout
         self.client_id = client_id or os.getenv("WITS_CLIENT_ID") or ""
         self.client_secret = client_secret or os.getenv("WITS_CLIENT_SECRET") or ""
@@ -55,15 +55,32 @@ class AsyncMarketPricesClient:
             raise AuthenticationError("client_id and client_secret are required")
         if timeout <= 0:
             raise ValidationError("timeout must be greater than 0")
-        self.auth = AsyncOAuth2ClientCredentials(
-            client_id=self.client_id,
-            client_secret=self.client_secret,
-            base_url=self.base_url.split("/api/market-prices/v1")[0],
-            session=self.session,
-            timeout=self.timeout,
-        )
+        self.auth: AsyncOAuth2ClientCredentials | None = None
+        if session is not None:
+            self.auth = AsyncOAuth2ClientCredentials(
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+                base_url=self.base_url.split("/api/market-prices/v1")[0],
+                session=session,
+                timeout=self.timeout,
+            )
+
+    async def _get_session(self) -> aiohttp.ClientSession:
+        """Return the HTTP session, creating it lazily if none was provided."""
+        if self.session is None:
+            self.session = aiohttp.ClientSession()
+        return self.session
 
     async def _authorized_headers(self) -> dict[str, str]:
+        session = await self._get_session()
+        if self.auth is None:
+            self.auth = AsyncOAuth2ClientCredentials(
+                client_id=self.client_id,
+                client_secret=self.client_secret,
+                base_url=self.base_url.split("/api/market-prices/v1")[0],
+                session=session,
+                timeout=self.timeout,
+            )
         token = await self.auth.get_token()
         return {"Authorization": f"Bearer {token}"}
 
@@ -89,7 +106,7 @@ class AsyncMarketPricesClient:
 
     async def close(self) -> None:
         """Close the underlying HTTP session if it was created by this client."""
-        if self._owns_session:
+        if self._owns_session and self.session is not None:
             await self.session.close()
 
     async def __aenter__(self) -> AsyncMarketPricesClient:
@@ -102,21 +119,25 @@ class AsyncMarketPricesClient:
 
     async def get_schedules(self) -> list[Schedule]:
         """Return the schedules currently exposed by the API."""
+        headers = await self._authorized_headers()
+        session = await self._get_session()
         return await self._wrap(
             list_schedules,
-            self.session,
+            session,
             self.base_url,
-            headers=await self._authorized_headers(),
+            headers=headers,
             timeout=self.timeout,
         )
 
     async def get_nodes(self) -> list[NodeInfo]:
         """Return supported market nodes."""
+        headers = await self._authorized_headers()
+        session = await self._get_session()
         return await self._wrap(
             list_nodes,
-            self.session,
+            session,
             self.base_url,
-            headers=await self._authorized_headers(),
+            headers=headers,
             timeout=self.timeout,
         )
 
@@ -133,9 +154,11 @@ class AsyncMarketPricesClient:
         offset: int | None = None,
     ) -> ScheduleDetails:
         """Return prices for a single schedule."""
+        headers = await self._authorized_headers()
+        session = await self._get_session()
         return await self._wrap(
             get_schedule_prices,
-            self.session,
+            session,
             self.base_url,
             schedule,
             market_type,
@@ -146,7 +169,7 @@ class AsyncMarketPricesClient:
             forward,
             island,
             offset,
-            headers=await self._authorized_headers(),
+            headers=headers,
             timeout=self.timeout,
         )
 
@@ -163,9 +186,11 @@ class AsyncMarketPricesClient:
         offset: int | None = None,
     ) -> list[ScheduleDetails]:
         """Return prices across one or more schedules."""
+        headers = await self._authorized_headers()
+        session = await self._get_session()
         return await self._wrap(
             get_prices,
-            self.session,
+            session,
             self.base_url,
             schedules,
             market_type,
@@ -176,6 +201,6 @@ class AsyncMarketPricesClient:
             forward,
             island,
             offset,
-            headers=await self._authorized_headers(),
+            headers=headers,
             timeout=self.timeout,
         )

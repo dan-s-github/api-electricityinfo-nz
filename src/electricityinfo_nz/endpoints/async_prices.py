@@ -138,7 +138,10 @@ async def get_schedule_prices(
     aio_timeout = aiohttp.ClientTimeout(total=timeout)
     async with session.get(url, params=params, headers=headers, timeout=aio_timeout) as resp:
         resp.raise_for_status()
-        payload = await resp.json(content_type=None)
+        try:
+            payload = await resp.json(content_type=None)
+        except ValueError as exc:
+            raise ResponseFormatError(f"Invalid JSON in API response: {exc}") from exc
 
     return _parse_schedule_details(payload, default_schedule=schedule)
 
@@ -193,7 +196,10 @@ async def get_prices(
     aio_timeout = aiohttp.ClientTimeout(total=timeout)
     async with session.get(url, params=params, headers=headers, timeout=aio_timeout) as resp:
         resp.raise_for_status()
-        payload = await resp.json(content_type=None)
+        try:
+            payload = await resp.json(content_type=None)
+        except ValueError as exc:
+            raise ResponseFormatError(f"Invalid JSON in API response: {exc}") from exc
 
     if isinstance(payload, list):
         schedules_payload = payload
