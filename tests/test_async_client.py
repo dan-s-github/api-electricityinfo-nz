@@ -42,10 +42,10 @@ class AsyncDummyResponse:
                 status=self.status,
             )
 
-    async def __aenter__(self):
+    async def __aenter__(self):  # noqa: D105
         return self
 
-    async def __aexit__(self, *args):
+    async def __aexit__(self, *args):  # noqa: D105
         pass
 
 
@@ -129,9 +129,7 @@ async def test_async_get_schedules(async_client):
     schedules = await async_client.get_schedules()
     assert len(schedules) == 1
     assert schedules[0].schedule == "RTP"
-    assert async_client.session.last_get["headers"] == {
-        "Authorization": f"Bearer {TOKEN_VALUE}"
-    }
+    assert async_client.session.last_get["headers"] == {"Authorization": f"Bearer {TOKEN_VALUE}"}
 
 
 async def test_async_get_nodes_returns_node_dictionaries(monkeypatch):

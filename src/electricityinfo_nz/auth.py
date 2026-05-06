@@ -1,6 +1,5 @@
 import time
 from dataclasses import dataclass, field
-from typing import Optional
 
 import requests
 
@@ -21,7 +20,7 @@ class OAuth2ClientCredentials:
     session: requests.Session = field(default_factory=requests.Session)
     timeout: float = DEFAULT_TIMEOUT
 
-    _access_token: Optional[str] = None
+    _access_token: str | None = None
     _expires_at: float = 0.0
 
     def _token_url(self) -> str:

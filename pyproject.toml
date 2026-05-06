@@ -10,14 +10,13 @@ readme = "README.md"
 keywords = [ "api", "electricity", "market-prices", "new-zealand", "wits" ]
 license = "MIT"
 authors = [ { name = "Daniel M", email = "daniel@mohni.info" } ]
-requires-python = ">=3.9"
+requires-python = ">=3.10"
 classifiers = [
   "Development Status :: 3 - Alpha",
   "Intended Audience :: Developers",
   "Natural Language :: English",
   "Operating System :: OS Independent",
   "Programming Language :: Python :: 3 :: Only",
-  "Programming Language :: Python :: 3.9",
   "Programming Language :: Python :: 3.10",
   "Programming Language :: Python :: 3.11",
   "Programming Language :: Python :: 3.12",
@@ -93,9 +92,9 @@ lint.isort.known-first-party = [ "electricityinfo_nz", "tests" ]
 [tool.pyproject-fmt]
 max_supported_python = "3.14"
 
-[tool.pytest.ini_options]
-minversion = "9.0"
-addopts = [
+[tool.pytest]
+ini_options.minversion = "9.0"
+ini_options.addopts = [
   "-v",
   "-Wonce",
   "-p no:doctest",
@@ -103,8 +102,8 @@ addopts = [
   "--cov-report=term",
   "--cov-report=xml",
 ]
-pythonpath = [ "src" ]
-asyncio_mode = "auto"
+ini_options.pythonpath = [ "src" ]
+ini_options.asyncio_mode = "auto"
 
 [tool.coverage]
 run.branch = true
