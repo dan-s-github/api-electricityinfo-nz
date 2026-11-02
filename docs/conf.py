@@ -9,7 +9,7 @@ from sphinx.ext import apidoc
 project = "Electricity Info NZ"
 copyright = "2026, Daniel M"
 author = "Daniel M"
-release = "1.0.0-rc.2"
+release = "1.0.0"
 
 extensions = [
     "myst_parser",
