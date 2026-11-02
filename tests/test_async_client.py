@@ -4,10 +4,17 @@ from unittest.mock import MagicMock
 import aiohttp
 import pytest
 
+from electricityinfo_nz import async_client as async_client_module
 from electricityinfo_nz.async_auth import AsyncOAuth2ClientCredentials
 from electricityinfo_nz.async_client import AsyncMarketPricesClient
+from electricityinfo_nz.endpoints.async_nodes import list_nodes
+from electricityinfo_nz.endpoints.async_prices import get_prices, get_schedule_prices
+from electricityinfo_nz.endpoints.async_schedules import list_schedules
 from electricityinfo_nz.exceptions import (
     AuthenticationError,
+    MarketPricesAPIError,
+    NotFoundError,
+    RateLimitError,
     ResponseFormatError,
     TransportError,
     ValidationError,
@@ -15,6 +22,7 @@ from electricityinfo_nz.exceptions import (
 
 TEST_CLIENT_SECRET = "test-client-secret"  # noqa: S105
 TOKEN_VALUE = "async-token-value"  # noqa: S105
+BASE_URL = "https://api.electricityinfo.co.nz/api/market-prices/v1"
 
 
 class AsyncDummyResponse:
@@ -335,4 +343,244 @@ async def test_async_auth_transport_error_raises_authentication_error():
     )
 
     with pytest.raises(AuthenticationError, match="Failed to obtain access token"):
+        await auth.get_token()
+
+
+def _session_returning(path, response):
+    return AsyncDummySession(get_map={f"{BASE_URL}{path}": response})
+
+
+def test_async_client_requires_credentials(monkeypatch):
+    monkeypatch.delenv("WITS_CLIENT_ID", raising=False)
+    monkeypatch.delenv("WITS_CLIENT_SECRET", raising=False)
+
+    with pytest.raises(AuthenticationError, match="client_id and client_secret"):
+        AsyncMarketPricesClient()
+
+
+def test_async_client_rejects_non_positive_timeout():
+    with pytest.raises(ValidationError, match="timeout"):
+        AsyncMarketPricesClient(client_id="id", client_secret=TEST_CLIENT_SECRET, timeout=-1)
+
+
+async def test_async_client_creates_and_closes_owned_session(monkeypatch):
+    created = []
+
+    class TrackingSession(AsyncDummySession):
+        def __init__(self):
+            super().__init__(
+                get_map={f"{BASE_URL}/schedules": AsyncDummyResponse(payload=[{"schedule": "RTP"}])}
+            )
+            self.closed = False
+            created.append(self)
+
+        async def close(self):
+            self.closed = True
+
+    monkeypatch.setattr(async_client_module.aiohttp, "ClientSession", TrackingSession)
+
+    async with AsyncMarketPricesClient(client_id="id", client_secret=TEST_CLIENT_SECRET) as client:
+        assert client.session is None
+        assert client.auth is None
+        schedules = await client.get_schedules()
+
+    assert [s.schedule for s in schedules] == ["RTP"]
+    assert len(created) == 1
+    assert created[0].closed
+    assert created[0].last_get["headers"] == {"Authorization": f"Bearer {TOKEN_VALUE}"}
+    assert created[0].last_post["url"] == "https://api.electricityinfo.co.nz/login/oauth2/token"
+
+
+async def test_async_client_close_without_session_is_noop():
+    client = AsyncMarketPricesClient(client_id="id", client_secret=TEST_CLIENT_SECRET)
+
+    await client.close()
+
+    assert client.session is None
+
+
+@pytest.mark.parametrize(
+    ("status", "expected"),
+    [
+        (401, AuthenticationError),
+        (403, AuthenticationError),
+        (404, NotFoundError),
+        (400, ValidationError),
+        (429, RateLimitError),
+        (500, MarketPricesAPIError),
+    ],
+)
+async def test_async_wrap_maps_http_status_to_exception(monkeypatch, status, expected):
+    client = AsyncMarketPricesClient(
+        client_id="id",
+        client_secret=TEST_CLIENT_SECRET,
+        session=_session_returning("/nodes", AsyncDummyResponse(status=status)),
+    )
+    monkeypatch.setattr(client, "auth", AsyncDummyAuth())
+
+    with pytest.raises(expected) as exc_info:
+        await client.get_nodes()
+
+    assert type(exc_info.value) is expected
+
+
+async def test_async_get_prices_accepts_list_payload_and_sends_all_filters(monkeypatch):
+    session = _session_returning(
+        "/prices",
+        AsyncDummyResponse(
+            payload=[
+                {
+                    "schedule": "RTP",
+                    "prices": [
+                        {
+                            "tradingDateTime": "2026-01-01T00:00:00Z",
+                            "tradingPeriod": 1,
+                            "node": "OTA2201",
+                        }
+                    ],
+                }
+            ]
+        ),
+    )
+    client = AsyncMarketPricesClient(
+        client_id="id", client_secret=TEST_CLIENT_SECRET, session=session
+    )
+    monkeypatch.setattr(client, "auth", AsyncDummyAuth())
+
+    result = await client.get_prices(
+        ["RTP", "PRSS"],
+        market_type="R",
+        nodes=["OTA2201"],
+        from_datetime="2026-01-01T00:00:00Z",
+        to_datetime="2026-01-02T00:00:00Z",
+        island="NI",
+        offset=5,
+    )
+
+    assert session.last_get["params"] == {
+        "schedules": "RTP,PRSS",
+        "marketType": "R",
+        "nodes": "OTA2201",
+        "from": "2026-01-01T00:00:00Z",
+        "to": "2026-01-02T00:00:00Z",
+        "island": "NI",
+        "offset": 5,
+    }
+    assert result[0].prices[0].node == "OTA2201"
+
+
+@pytest.mark.parametrize(
+    ("kwargs", "match"),
+    [
+        ({"island": "XX"}, "island"),
+        ({"back": 49}, "back"),
+        ({"forward": 0}, "forward"),
+        ({"offset": -1}, "offset"),
+        ({"from_datetime": "not-a-date"}, "'from' datetime"),
+        ({"to_datetime": "not-a-date"}, "'to' datetime"),
+        ({"nodes": [""]}, "nodes"),
+    ],
+)
+async def test_async_price_filter_validation(kwargs, match):
+    with pytest.raises(ValidationError, match=match):
+        await get_prices(AsyncDummySession(), BASE_URL, ["RTP"], "E", **kwargs)
+
+
+@pytest.mark.parametrize("schedules", [[], [""]])
+async def test_async_get_prices_requires_schedules(schedules):
+    with pytest.raises(ValidationError, match="schedules must contain"):
+        await get_prices(AsyncDummySession(), BASE_URL, schedules, "E")
+
+
+async def test_async_get_schedule_prices_requires_schedule():
+    with pytest.raises(ValidationError, match="schedule is required"):
+        await get_schedule_prices(AsyncDummySession(), BASE_URL, "", "E")
+
+
+@pytest.mark.parametrize(
+    ("payload", "match"),
+    [
+        ({"schedules": "invalid"}, "Invalid 'schedules' payload"),
+        (["invalid"], "Invalid schedule details payload"),
+        ([{"schedule": 1}], "Invalid or missing 'schedule'"),
+        ([{"schedule": "RTP", "prices": {}}], "Invalid 'prices' payload"),
+    ],
+)
+async def test_async_get_prices_rejects_malformed_payloads(payload, match):
+    session = _session_returning("/prices", AsyncDummyResponse(payload=payload))
+
+    with pytest.raises(ResponseFormatError, match=match):
+        await get_prices(session, BASE_URL, ["RTP"], "E")
+
+
+@pytest.mark.parametrize(
+    ("call", "path"),
+    [
+        (lambda s: get_prices(s, BASE_URL, ["RTP"], "E"), "/prices"),
+        (lambda s: get_schedule_prices(s, BASE_URL, "RTP", "E"), "/schedules/RTP/prices"),
+        (lambda s: list_nodes(s, BASE_URL), "/nodes"),
+    ],
+)
+async def test_async_endpoints_map_json_decode_errors(call, path):
+    session = _session_returning(path, AsyncDummyResponse(json_error=ValueError("bad json")))
+
+    with pytest.raises(ResponseFormatError, match="Invalid JSON"):
+        await call(session)
+
+
+@pytest.mark.parametrize(
+    ("payload", "match"),
+    [
+        ({"node": "OTA2201"}, "Invalid nodes payload"),
+        (["invalid"], "Invalid node entry"),
+        ([{"island": "NI"}], "Invalid or missing 'node'"),
+        ([{"node": "OTA2201", "island": ""}], "Invalid or missing 'island'"),
+    ],
+)
+async def test_async_list_nodes_rejects_malformed_payloads(payload, match):
+    session = _session_returning("/nodes", AsyncDummyResponse(payload=payload))
+
+    with pytest.raises(ResponseFormatError, match=match):
+        await list_nodes(session, BASE_URL)
+
+
+@pytest.mark.parametrize(
+    ("payload", "match"),
+    [
+        ({"schedule": "RTP"}, "Invalid schedules payload"),
+        (["invalid"], "Invalid schedule entry"),
+        ([{"runType": "short"}], "Invalid or missing 'schedule'"),
+        ([{"schedule": "RTP", "runType": 1}], "Invalid 'runType'"),
+        ([{"schedule": "RTP", "marketType": 1}], "Invalid 'marketType'"),
+    ],
+)
+async def test_async_list_schedules_rejects_malformed_payloads(payload, match):
+    session = _session_returning("/schedules", AsyncDummyResponse(payload=payload))
+
+    with pytest.raises(ResponseFormatError, match=match):
+        await list_schedules(session, BASE_URL)
+
+
+@pytest.mark.parametrize(
+    ("response", "match"),
+    [
+        (AsyncDummyResponse(status=401, text_val="denied"), r"status 401\): denied"),
+        (AsyncDummyResponse(json_error=ValueError("bad json")), "invalid JSON"),
+        (AsyncDummyResponse(payload=["token"]), "unexpected payload"),
+        (AsyncDummyResponse(payload={"access_token": ""}), "did not return an access_token"),
+        (
+            AsyncDummyResponse(payload={"access_token": TOKEN_VALUE, "expires_in": "soon"}),
+            "invalid expires_in",
+        ),
+    ],
+)
+async def test_async_auth_rejects_bad_token_responses(response, match):
+    auth = AsyncOAuth2ClientCredentials(
+        client_id="id",
+        client_secret=TEST_CLIENT_SECRET,
+        base_url="https://api.electricityinfo.co.nz",
+        session=AsyncDummySession(post_response=response),
+    )
+
+    with pytest.raises(AuthenticationError, match=match):
         await auth.get_token()

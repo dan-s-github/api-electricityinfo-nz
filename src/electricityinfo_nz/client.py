@@ -83,9 +83,13 @@ class MarketPricesClient:
     def _wrap(self, func: Callable[..., T], *args: Any, **kwargs: Any) -> T:
         try:
             return func(*args, **kwargs)
-        except requests.HTTPError as exc:  # pragma: no cover - thin mapping
-            status = exc.response.status_code if exc.response else 0
-            message = self._response_message(exc.response, str(exc)) if exc.response else str(exc)
+        except requests.HTTPError as exc:
+            # Response.__bool__ is False for 4xx/5xx, so compare against None explicitly.
+            response = exc.response
+            status = response.status_code if response is not None else 0
+            message = (
+                self._response_message(response, str(exc)) if response is not None else str(exc)
+            )
             if status in (401, 403):
                 raise AuthenticationError(message) from exc
             if status == 404:

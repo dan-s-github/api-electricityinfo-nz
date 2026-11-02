@@ -87,7 +87,7 @@ class AsyncMarketPricesClient:
     async def _wrap(self, func: Callable[..., Awaitable[T]], *args: Any, **kwargs: Any) -> T:
         try:
             return await func(*args, **kwargs)
-        except aiohttp.ClientResponseError as exc:  # pragma: no cover - thin mapping
+        except aiohttp.ClientResponseError as exc:
             status = exc.status
             message = str(exc)
             if status in (401, 403):
