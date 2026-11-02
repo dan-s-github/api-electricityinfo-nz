@@ -1,0 +1,166 @@
+[build-system]
+build-backend = "setuptools.build_meta"
+requires = [ "setuptools>=77.0.3" ]
+
+[project]
+name = "electricityinfo-nz"
+version = "1.0.0-rc.2"
+description = "Python client for the WITS Market Prices API (Electricity Info NZ)"
+readme = "README.md"
+keywords = [ "api", "electricity", "market-prices", "new-zealand", "wits" ]
+license = "MIT"
+authors = [ { name = "Daniel M", email = "daniel@mohni.info" } ]
+requires-python = ">=3.10"
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Developers",
+  "Natural Language :: English",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Topic :: Software Development :: Libraries",
+]
+dependencies = [
+  "aiohttp>=3.9",
+  "python-dateutil>=2.8.2",
+  "requests>=2.31",
+]
+urls."Bug Tracker" = "https://github.com/dan-s-github/api-electricityinfo-nz/issues"
+urls.Changelog = "https://github.com/dan-s-github/api-electricityinfo-nz/blob/main/CHANGELOG.md"
+urls.documentation = "https://github.com/dan-s-github/api-electricityinfo-nz/blob/main/docs/index.md"
+urls.repository = "https://github.com/dan-s-github/api-electricityinfo-nz"
+
+[dependency-groups]
+dev = [
+  "mypy>=1.11",
+  "pre-commit",
+  "pytest>=7.4",
+  "pytest-asyncio>=0.23",
+  "pytest-cov>=4.1",
+  "pyyaml>=6",
+  "types-requests>=2.32",
+]
+docs = [
+  "furo>=2024.8.6",
+  "myst-parser>=3.0.1",
+  "sphinx>=7,<9",
+  "sphinx-autobuild>=2024.10.3",
+]
+
+[tool.setuptools]
+packages.find.where = [ "src" ]
+
+[tool.ruff]
+line-length = 100
+lint.select = [
+  "B",   # flake8-bugbear
+  "C4",  # flake8-comprehensions
+  "D",   # flake8-docstrings
+  "E",   # pycodestyle
+  "F",   # pyflakes
+  "I",   # isort
+  "RUF", # ruff specific
+  "S",   # flake8-bandit
+  "UP",  # pyupgrade
+  "W",   # pycodestyle
+]
+lint.ignore = [
+  "D100", # Missing docstring in public module
+  "D104", # Missing docstring in public package
+  "D107", # Missing docstring in `__init__`
+  "D203", # 1 blank line required before class docstring
+  "D212", # Multi-line docstring summary should start at the first line
+  "D401", # First line of docstring should be in imperative mood
+]
+lint.per-file-ignores."conftest.py" = [ "D100" ]
+lint.per-file-ignores."docs/conf.py" = [ "D100" ]
+lint.per-file-ignores."setup.py" = [ "D100" ]
+lint.per-file-ignores."tests/**/*" = [
+  "D100",
+  "D101",
+  "D102",
+  "D103",
+  "D104",
+  "S101",
+]
+lint.isort.known-first-party = [ "electricityinfo_nz", "tests" ]
+
+[tool.pyproject-fmt]
+max_supported_python = "3.14"
+
+[tool.pytest]
+ini_options.minversion = "9.0"
+ini_options.addopts = [
+  "-v",
+  "-Wonce",
+  "-p no:doctest",
+  "--cov=electricityinfo_nz",
+  "--cov-report=term",
+  "--cov-report=xml",
+]
+ini_options.pythonpath = [ "src" ]
+ini_options.asyncio_mode = "auto"
+
+[tool.coverage]
+run.branch = true
+paths.source = [
+  "src",
+  ".tox/**/site-packages",
+]
+report.exclude_lines = [
+  "@overload",
+  'if __name__ == "__main__":',
+  "if TYPE_CHECKING",
+  "pragma: no cover",
+  "raise NotImplementedError",
+]
+
+[tool.mypy]
+mypy_path = "src/"
+check_untyped_defs = true
+disallow_any_generics = true
+disallow_incomplete_defs = true
+disallow_untyped_defs = true
+no_implicit_optional = true
+show_error_codes = true
+warn_unreachable = true
+warn_unused_ignores = true
+exclude = [
+  "docs/.*",
+  "setup.py",
+]
+overrides = [
+  { module = "tests.*", allow_untyped_defs = true },
+  { module = "docs.*", ignore_errors = true },
+]
+
+[tool.semantic_release]
+version_toml = [ "pyproject.toml:project.version" ]
+version_variables = [
+  "src/electricityinfo_nz/__init__.py:__version__",
+  "docs/conf.py:release",
+]
+build_command = """
+pip install uv
+uv lock
+git add uv.lock
+uv build
+"""
+branches.main.match = "main"
+branches.noop.match = "(?!main$)"
+branches.noop.prerelease = true
+changelog.exclude_commit_patterns = [
+  "chore(?:\\([^)]*?\\))?: .+",
+  "ci(?:\\([^)]*?\\))?: .+",
+  "refactor(?:\\([^)]*?\\))?: .+",
+  "style(?:\\([^)]*?\\))?: .+",
+  "test(?:\\([^)]*?\\))?: .+",
+  "build\\((?!deps\\): .+)",
+  "Merged? .*",
+  "Initial [Cc]ommit.*",         # codespell:ignore
+]
+changelog.environment.keep_trailing_newline = true

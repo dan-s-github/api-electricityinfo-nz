@@ -9,4 +9,16 @@ build/
 .venv
 ENV/
 venv/
+.idea/
 .vscode/
+.mypy_cache/
+.pytest_cache/
+.coverage
+coverage.xml
+htmlcov/
+docs/_build/
+docs/electricityinfo_nz*.rst
+docs/modules.rst
+
+# Test secrets
+tests/secrets.yaml
