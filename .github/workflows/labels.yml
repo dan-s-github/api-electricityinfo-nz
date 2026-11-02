@@ -19,7 +19,25 @@ jobs:
         uses: actions/setup-python@v7
         with:
           python-version: 3.x
-      - name: Install labels
-        run: pip install labels
+      # Creates missing labels and updates existing ones; never deletes labels.
       - name: Sync config with Github
-        run: labels -u ${{ github.repository_owner }} -t "${{ secrets.GITHUB_TOKEN }}" sync -f .github/labels.toml
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: python
+        run: |
+          import subprocess
+          import tomllib
+
+          with open(".github/labels.toml", "rb") as f:
+              labels = tomllib.load(f)
+
+          for label in labels.values():
+              subprocess.run(
+                  [
+                      "gh", "label", "create", label["name"],
+                      "--color", label["color"],
+                      "--description", label.get("description", ""),
+                      "--force",
+                  ],
+                  check=True,
+              )
